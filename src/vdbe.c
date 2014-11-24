@@ -64,11 +64,11 @@
 ** procedures use this information to make sure that indices are
 ** working correctly.  This variable has no function other than to
 ** help verify the correct operation of the library.
-** 
+** 这个全局变量会随着游标的移动而增大，不管是通过OP_SeekXX还是OP_Next
+** 还是OP_Prev操作码，它不能帮助核实正确的操作。
 */
 #ifdef SQLITE_TEST
-int sqlite3_search_count = 0;/*这个全局变量会随着游标的移动而增大，不管是通过OP_SeekXX还是OP_Next
-							还是OP_Prev操作码，它不能帮助核实正确的操作。*/
+int sqlite3_search_count = 0;
 #endif
 
 /*
@@ -78,11 +78,11 @@ int sqlite3_search_count = 0;/*这个全局变量会随着游标的移动而增�
 **
 ** This facility is used for testing purposes only.  It does not function
 ** in an ordinary build.
+** 当这个全局变量为正数时，指令在VDBE中执行一次，它就减1，,当它变为0时，
+** sqlite3结构体中的u1.isInterrupted区域会被设置以模拟一个中断发生
 */
 #ifdef SQLITE_TEST
-int sqlite3_interrupt_count = 0;/*当这个全局变量为正数时，指令在VDBE中执行一次，它就减1，,当它变为0时，
-									sqlite3结构体中的u1.isInterrupted区域会被设置以模拟一个中断发生
-									*/
+int sqlite3_interrupt_count = 0;					
 #endif
 
 /*
@@ -91,10 +91,11 @@ int sqlite3_interrupt_count = 0;/*当这个全局变量为正数时，指令在V
 ** sorting is occurring or not occurring at appropriate times.   This variable
 ** has no function other than to help verify the correct operation of the
 ** library.
+** 这个全局变量是在OP_Sort操作码执行后增加1,测试步骤会使用这个信息以确定排序在
+** 适当的时间发生或没发生,这个变量除了帮助验证正确的库操作没有其他功能.
 */
 #ifdef SQLITE_TEST
-int sqlite3_sort_count = 0;/*这个全局变量是在OP_Sort操作码执行后增加1,测试步骤会使用这个信息以确定排序在
-							适当的时间发生或没发生,这个变量除了帮助验证正确的库操作没有其他功能.*/
+int sqlite3_sort_count = 0;
 #endif
 
 /*
@@ -103,10 +104,11 @@ int sqlite3_sort_count = 0;/*这个全局变量是在OP_Sort操作码执行后�
 ** use this information to make sure that the zero-blob functionality
 ** is working correctly.   This variable has no function other than to
 ** help verify the correct operation of the library.
+** 这个全局变量记录了已经被VDBE操作码使用了的最大的MEM_Blob或者MEM_Str,测试
+**	步骤使用它确定zero-blob功能工作正常,这个变量除了帮助验证正确的库操作没有其他功能
 */
 #ifdef SQLITE_TEST
-int sqlite3_max_blobsize = 0;/*这个全局变量记录了已经被VDBE操作码使用了的最大的MEM_Blob或者MEM_Str,测试
-							步骤使用它确定zero-blob功能工作正常,这个变量除了帮助验证正确的库操作没有其他功能*/
+int sqlite3_max_blobsize = 0;/**/
 static void updateMaxBlobsize(Mem *p){
   if( (p->flags & (MEM_Str|MEM_Blob))!=0 && p->n > sqlite3_max_blobsize ){
     sqlite3_max_blobsize = p->n;/*如果p指向的结构体的标记'与'上 'MEM_Str和MEM_Blob或运算的值'的结果不等于0,
@@ -183,22 +185,33 @@ int sqlite3_found_count = 0;
 ** routines.
 ** 验证寄存器里的pMem指针会被一个自定义方法运行通过还是作为查询结果返回给user,这程序
 ** 调用sqlite3_value_*()定义了pMem->type变量
+**#define SQLITE_INTEGER  1
+	#define SQLITE_FLOAT    2
+	#define SQLITE_BLOB     4
+	#define SQLITE_NULL     5
+	#ifdef SQLITE_TEXT
+	# undef SQLITE_TEXT
+	#else
+	# define SQLITE_TEXT     3
+	#endif
+	#define SQLITE3_TEXT     3
 */
-void sqlite3VdbeMemStoreType(Mem *pMem){
+void sqlite3VdbeMemStoreType(Mem *pMem)
+{
   int flags = pMem->flags;
   if( flags & MEM_Null ){
-    pMem->type = SQLITE_NULL;
+    pMem->type = SQLITE_NULL;      //SQLITE_NULL = 5
   }
   else if( flags & MEM_Int ){
-    pMem->type = SQLITE_INTEGER;
+    pMem->type = SQLITE_INTEGER; //SQLITE_INTEGER  = 1
   }
   else if( flags & MEM_Real ){
-    pMem->type = SQLITE_FLOAT;
+    pMem->type = SQLITE_FLOAT; //SQLITE_FLOAT  =  2
   }
   else if( flags & MEM_Str ){
-    pMem->type = SQLITE_TEXT;
+    pMem->type = SQLITE_TEXT; // SQLITE_TEXT   =  3
   }else{
-    pMem->type = SQLITE_BLOB;
+    pMem->type = SQLITE_BLOB; //SQLITE_BLOB   = 4
   }
 }
 
